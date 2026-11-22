@@ -81,9 +81,20 @@ class Settings(BaseSettings):
 
     # API (Phase 6)
     api_cors_origins: str = Field(
-        default="http://localhost:3000,http://127.0.0.1:3000",
+        default=(
+            "http://localhost:3000,http://127.0.0.1:3000,"
+            "https://bite-wise-tau.vercel.app"
+        ),
         alias="API_CORS_ORIGINS",
         description="Comma-separated allowed CORS origins (* disables credentialed CORS).",
+    )
+    api_cors_origin_regex: str | None = Field(
+        default=r"https://.*\.vercel\.app",
+        alias="API_CORS_ORIGIN_REGEX",
+        description=(
+            "Optional regex for CORS origins (e.g. Vercel preview URLs). "
+            "Set empty to disable."
+        ),
     )
     api_rate_limit_per_minute: int = Field(
         default=60,
@@ -124,6 +135,11 @@ class Settings(BaseSettings):
         if raw == "*":
             return ["*"]
         return [part.strip() for part in raw.split(",") if part.strip()]
+
+    def cors_origin_regex(self) -> str | None:
+        """Return a non-empty CORS origin regex, or None when disabled."""
+        raw = (self.api_cors_origin_regex or "").strip()
+        return raw or None
 
 
 @lru_cache

@@ -82,3 +82,10 @@ def test_cors_origins_list_parsing():
     ]
     assert Settings(api_cors_origins="*").cors_origins_list() == ["*"]
     assert Settings(api_cors_origins="").cors_origins_list() == []
+
+
+def test_cors_origin_regex_default_allows_vercel():
+    settings = Settings(llm_api_key=None)
+    assert settings.cors_origin_regex() == r"https://.*\.vercel\.app"
+    assert Settings(api_cors_origin_regex="").cors_origin_regex() is None
+    assert Settings(api_cors_origin_regex="   ").cors_origin_regex() is None

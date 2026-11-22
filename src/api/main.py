@@ -83,6 +83,7 @@ def create_app(
         setattr(app.state, _SERVICE_ATTR, service)
 
     origins = cfg.cors_origins_list()
+    origin_regex = cfg.cors_origin_regex()
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins
@@ -90,6 +91,7 @@ def create_app(
             "http://localhost:3000",
             "http://127.0.0.1:3000",
         ],
+        allow_origin_regex=origin_regex,
         allow_credentials=origins != ["*"],
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["*"],

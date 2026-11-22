@@ -134,11 +134,16 @@ export function DiscoverApp() {
 
         {optionsError && (
           <div className="mb-6 rounded-xl border border-crimson/40 bg-crimson/10 px-4 py-3 text-sm text-crimson-soft">
-            {optionsError} — start the API with{" "}
+            {optionsError}. Check that{" "}
             <code className="rounded bg-surface px-1.5 py-0.5 text-ink">
-              python -m src.api
+              NEXT_PUBLIC_API_BASE_URL
             </code>{" "}
-            and ensure processed data exists.
+            points at a reachable API and that the API allows this site&apos;s
+            origin in{" "}
+            <code className="rounded bg-surface px-1.5 py-0.5 text-ink">
+              API_CORS_ORIGINS
+            </code>
+            .
           </div>
         )}
 

@@ -250,6 +250,35 @@ def test_openapi_includes_recommendations_path(api_client):
     )
 
 
+def test_cors_allows_vercel_preview_origin(
+    candidate_store, budget_thresholds, sample_llm_text, tmp_path
+):
+    settings = Settings(
+        data_processed_dir=tmp_path,
+        api_cors_origins="http://localhost:3000",
+        api_cors_origin_regex=r"https://.*\.vercel\.app",
+    )
+    service = RecommenderService(
+        settings=settings,
+        client=MockLLMClient(response_text=sample_llm_text),
+        restaurants=candidate_store,
+        budget_thresholds=budget_thresholds,
+        dry_run=True,
+    )
+    app = create_app(settings=settings, service=service, enable_rate_limit=False)
+    client = TestClient(app)
+    origin = "https://bite-wise-tau.vercel.app"
+    res = client.options(
+        "/api/options",
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+    assert res.status_code == 200
+    assert res.headers.get("access-control-allow-origin") == origin
+
+
 def test_docs_disabled_when_configured(
     candidate_store, budget_thresholds, sample_llm_text, tmp_path
 ):
