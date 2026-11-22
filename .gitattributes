@@ -1,0 +1,8 @@
+# Shell scripts must use LF so Linux Docker ENTRYPOINT shebangs work
+# (CRLF breaks Railway with "no such file or directory" / 502).
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.py text eol=lf
+*.toml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf

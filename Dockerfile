@@ -22,7 +22,9 @@ RUN pip install --no-cache-dir -e ".[data,llm,api]"
 COPY data/processed ./data/processed
 COPY data/raw/.gitkeep ./data/raw/.gitkeep
 COPY scripts/docker-entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh \
+# Strip CR so Windows CRLF checkouts cannot break the Linux shebang (Railway 502).
+RUN sed -i 's/\r$//' /entrypoint.sh \
+    && chmod +x /entrypoint.sh \
     && mkdir -p /app/data/processed /app/data/raw \
     && if [ ! -f /app/data/processed/restaurants.parquet ]; then \
          python -m src.ingestion; \

@@ -3,22 +3,22 @@
 # Do not abort the container if ingestion fails — still start the API so /health can report.
 set -e
 
-PROCESSED_DIR="${DATA_PROCESSED_DIR:-/app/data/processed}"
-PROCESSED_FILE="${PROCESSED_DIR}/restaurants.parquet"
+PROCESSED_DIR=""
+PROCESSED_FILE="/restaurants.parquet"
 
-if [ ! -f "${PROCESSED_FILE}" ]; then
-  if [ "${RUN_INGESTION:-true}" = "true" ]; then
-    echo "Processed store missing at ${PROCESSED_FILE}; running ingestion..."
+if [ ! -f "" ]; then
+  if [ "" = "true" ]; then
+    echo "Processed store missing at ; running ingestion..."
     if ! python -m src.ingestion; then
       echo "WARNING: ingestion failed. Starting API anyway (health will be degraded)."
     fi
   else
-    echo "WARNING: ${PROCESSED_FILE} not found."
+    echo "WARNING:  not found."
     echo "         /health will report degraded until you bake data or set RUN_INGESTION=true."
   fi
 else
-  echo "Processed store found at ${PROCESSED_FILE}"
+  echo "Processed store found at "
 fi
 
-echo "Starting API (PORT=${PORT:-unset} API_HOST=${API_HOST:-unset})..."
+echo "Starting API (PORT= API_HOST=)..."
 exec "$@"
