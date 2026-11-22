@@ -20,6 +20,7 @@ def main() -> None:
         host = "0.0.0.0"
         port = int(os.environ["PORT"])
 
+    print(f"BiteWise API listening on http://{host}:{port}", flush=True)
     uvicorn.run(
         "src.api.main:app",
         host=host,
