@@ -1,0 +1,52 @@
+# Secrets / local env
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.venv/
+venv/
+env/
+
+# Data caches (keep folder structure via .gitkeep)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Hugging Face / datasets caches
+.cache/
+**/huggingface/
+*.arrow
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Next.js web app
+web/node_modules/
+web/.next/
+web/out/
+web/.env.local
+web/.env*.local
+web/npm-debug.log*
+web/tsconfig.tsbuildinfo

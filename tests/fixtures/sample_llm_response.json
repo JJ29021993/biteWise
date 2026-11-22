@@ -1,0 +1,23 @@
+{
+  "summary": "Solid mid-budget Italian picks in Indiranagar that clear your rating bar, with a lean toward family-friendly dining.",
+  "recommendations": [
+    {
+      "restaurant_id": 101,
+      "name": "Trattoria X",
+      "rank": 1,
+      "explanation": "Best overall fit: strong 4.5 rating, medium budget cost for two, and Italian cuisines match, with ambience that suits a family outing."
+    },
+    {
+      "restaurant_id": 102,
+      "name": "Pasta House",
+      "rank": 2,
+      "explanation": "Slightly cheaper medium-budget Italian option while staying above your 4.0 rating preference."
+    },
+    {
+      "restaurant_id": 103,
+      "name": "Roma Bites",
+      "rank": 3,
+      "explanation": "Meets cuisine and budget filters; good backup if you want a lighter cafe-style Italian meal."
+    }
+  ]
+}

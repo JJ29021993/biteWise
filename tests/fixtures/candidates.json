@@ -1,0 +1,35 @@
+[
+  {
+    "restaurant_id": 101,
+    "name": "Trattoria X",
+    "location": "Indiranagar",
+    "cuisines": "Italian, Pizza",
+    "rating": 4.5,
+    "cost_for_two": 1200.0,
+    "budget": "medium",
+    "votes": 850,
+    "rest_type": "Casual Dining"
+  },
+  {
+    "restaurant_id": 102,
+    "name": "Pasta House",
+    "location": "Indiranagar",
+    "cuisines": "Italian",
+    "rating": 4.2,
+    "cost_for_two": 900.0,
+    "budget": "medium",
+    "votes": 420,
+    "rest_type": "Casual Dining"
+  },
+  {
+    "restaurant_id": 103,
+    "name": "Roma Bites",
+    "location": "Indiranagar",
+    "cuisines": "Italian, Continental",
+    "rating": 4.0,
+    "cost_for_two": 1100.0,
+    "budget": "medium",
+    "votes": 210,
+    "rest_type": "Cafe"
+  }
+]

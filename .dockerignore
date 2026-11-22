@@ -1,0 +1,44 @@
+.git
+.github
+.venv
+venv
+env
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+**/__pycache__
+**/*.py[cod]
+*.egg-info
+.eggs
+dist
+build
+.cache
+**/huggingface
+
+# Local secrets — inject via compose/env at runtime
+.env
+.env.*
+!.env.example
+
+# Frontend (built in its own image)
+web/node_modules
+web/.next
+web/out
+
+# Keep processed store for bake-into-image; skip bulky raw HF cache
+data/raw/*
+!data/raw/.gitkeep
+
+.streamlit
+.idea
+.vscode
+stitch_bitewise_dark_ui_system
+agent-transcripts
+*.md
+!README.md
+docs
+tests
+scripts/demo_recommend.py
+scripts/_verify_groq.py

@@ -1,0 +1,50 @@
+# Local / single-host deploy: API + Next.js
+# Usage:
+#   1) copy .env.example → .env (optional GROQ_API_KEY)
+#   2) python -m src.ingestion   # once, so data/processed is available to bake/mount
+#   3) docker compose up --build
+#
+# Browser → http://localhost:3000 → API at http://localhost:8000
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      API_HOST: "0.0.0.0"
+      API_PORT: "8000"
+      # Origins the browser uses for the UI (not the Docker service name)
+      API_CORS_ORIGINS: "${API_CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}"
+      GROQ_API_KEY: "${GROQ_API_KEY:-}"
+      GROQ_MODEL: "${GROQ_MODEL:-openai/gpt-oss-120b}"
+      LLM_MOCK_MODE: "${LLM_MOCK_MODE:-false}"
+      API_DISABLE_DOCS: "${API_DISABLE_DOCS:-false}"
+      API_RATE_LIMIT_PER_MINUTE: "${API_RATE_LIMIT_PER_MINUTE:-60}"
+      RUN_INGESTION: "${RUN_INGESTION:-false}"
+    volumes:
+      # Persist / share processed store with the host
+      - ./data/processed:/app/data/processed
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        # Browser-facing API URL (host ports), not the compose service DNS name
+        NEXT_PUBLIC_API_BASE_URL: "${NEXT_PUBLIC_API_BASE_URL:-http://127.0.0.1:8000}"
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
