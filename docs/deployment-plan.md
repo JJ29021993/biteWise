@@ -207,8 +207,8 @@ The UI defaults dry-run on in the form for safe demos; live mode still depends o
 | `LLM_MOCK_MODE` | `false` for live; `true` for cost-free demos |
 | `LLM_TIMEOUT_SECONDS` | Default `45`; raise only if Groq latency warrants |
 | `DEFAULT_TOP_K` / `CANDIDATE_CAP` | Defaults `5` / `50`; cap bounds LLM cost |
-| `API_HOST` | Must be `0.0.0.0` on Railway (never paste local `127.0.0.1`). When `PORT` is set, the process forces `0.0.0.0`. |
-| `API_PORT` / `PORT` | Railway injects `PORT` and proxies to it; `PORT` wins over `API_PORT` |
+| `API_HOST` | Must be `0.0.0.0` on Railway (never paste local `127.0.0.1`). PaaS signals force `0.0.0.0`. |
+| `API_PORT` / `PORT` | Image defaults `API_PORT=8000` (matches `EXPOSE`). Explicit `API_PORT` wins over Railway `PORT`. Set the public domain **Target Port** to `8000` if you see 502. |
 | `API_CORS_ORIGINS` | Exact frontend origins, comma-separated; avoid `*` with credentials |
 | `API_RATE_LIMIT_PER_MINUTE` | Keep ≥1; `/health` and OpenAPI docs are exempt |
 | `API_DISABLE_DOCS` | `true` hides `/docs`, `/redoc`, `/openapi.json` |

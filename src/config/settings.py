@@ -111,9 +111,10 @@ class Settings(BaseSettings):
         default=8000,
         ge=1,
         le=65535,
-        # Prefer PORT so Railway/Render/Fly routing works even if API_PORT is set in the image.
-        validation_alias=AliasChoices("PORT", "API_PORT"),
-        description="Listen port. PORT (PaaS) wins over API_PORT when both are set.",
+        # Prefer API_PORT so Docker EXPOSE 8000 / Railway Target Port 8000 stay aligned
+        # when the platform also injects a different PORT.
+        validation_alias=AliasChoices("API_PORT", "PORT"),
+        description="Listen port. Explicit API_PORT wins over platform PORT.",
     )
     api_disable_docs: bool = Field(
         default=False,

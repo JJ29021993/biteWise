@@ -5,8 +5,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     API_HOST=0.0.0.0 \
+    API_PORT=8000 \
     RUN_INGESTION=true
-# Do not hardcode API_PORT — Railway injects PORT and proxies to it.
+# Bind 8000 to match EXPOSE / common Railway "Target Port" = 8000.
+# python -m src.api prefers API_PORT over Railway's PORT when both are set.
 
 WORKDIR /app
 
@@ -35,4 +37,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=5 \
     CMD curl -fsS "http://127.0.0.1:${PORT:-8000}/health" || exit 1
 
-CMD sh -c 'echo "BiteWise boot PORT=${PORT:-8000}"; exec python -m src.api'
+CMD sh -c 'echo "BiteWise boot API_PORT=${API_PORT:-8000} PORT=${PORT:-unset}"; exec python -m src.api'

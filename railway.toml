@@ -10,3 +10,5 @@ healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 5
+# App listens on 8000 (Dockerfile API_PORT/EXPOSE). If the service still 502s,
+# open Networking and set the public domain Target Port to 8000 (or clear it).

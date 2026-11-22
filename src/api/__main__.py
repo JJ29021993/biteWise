@@ -37,23 +37,38 @@ def _ensure_processed_store() -> None:
         )
 
 
-def main() -> None:
-    _ensure_processed_store()
+def _resolve_bind() -> tuple[str, int]:
+    """
+    Pick host/port for uvicorn.
 
-    # Import after optional ingestion so a missing store does not fail import paths.
-    import uvicorn
+    Railway injects PORT and (often) a public-networking *Target Port* of 8000
+    from EXPOSE/API_PORT. Prefer an explicit API_PORT when both are set so the
+    process matches that target; otherwise use PORT. Always bind 0.0.0.0 when
+    either PaaS signal is present (ignore pasted local API_HOST=127.0.0.1).
+    """
+    paas_port = os.environ.get("PORT")
+    api_port = os.environ.get("API_PORT")
+
+    if paas_port or api_port:
+        host = "0.0.0.0"
+        if api_port:
+            port = int(api_port)
+        else:
+            port = int(paas_port)  # type: ignore[arg-type]
+        return host, port
 
     from src.config import get_settings
 
     settings = get_settings()
-    host = settings.api_host
-    port = settings.api_port
+    return settings.api_host, settings.api_port
 
-    # Railway/Render/Fly inject PORT and proxy to it. Always bind publicly in that case,
-    # even if someone copied local API_HOST=127.0.0.1 into the platform env.
-    if os.environ.get("PORT"):
-        host = "0.0.0.0"
-        port = int(os.environ["PORT"])
+
+def main() -> None:
+    _ensure_processed_store()
+
+    import uvicorn
+
+    host, port = _resolve_bind()
 
     print(f"BiteWise API listening on http://{host}:{port}", flush=True)
     print(
