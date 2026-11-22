@@ -37,8 +37,8 @@ export default {
         },
       },
       fontFamily: {
-        display: ["var(--font-outfit)", "system-ui", "sans-serif"],
-        body: ["var(--font-source-sans)", "system-ui", "sans-serif"],
+        display: ["var(--font-outfit)"],
+        body: ["var(--font-source-sans)"],
       },
       maxWidth: {
         shell: "1180px",

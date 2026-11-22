@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
-import { Outfit, Source_Sans_3 } from "next/font/google";
+
+import "@fontsource/outfit/500.css";
+import "@fontsource/outfit/600.css";
+import "@fontsource/outfit/700.css";
+import "@fontsource/outfit/800.css";
+import "@fontsource/source-sans-3/400.css";
+import "@fontsource/source-sans-3/500.css";
+import "@fontsource/source-sans-3/600.css";
+import "@fontsource/source-sans-3/700.css";
 
 import "./globals.css";
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
-  weight: ["500", "600", "700", "800"],
-});
-
-const sourceSans = Source_Sans_3({
-  subsets: ["latin"],
-  variable: "--font-source-sans",
-  weight: ["400", "500", "600", "700"],
-});
 
 export const metadata: Metadata = {
   title: "BiteWise · Discover restaurants",
@@ -28,11 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body
-        className={`${outfit.variable} ${sourceSans.variable} bg-canvas font-body text-ink antialiased`}
-      >
-        {children}
-      </body>
+      <body className="bg-canvas font-body text-ink antialiased">{children}</body>
     </html>
   );
 }
