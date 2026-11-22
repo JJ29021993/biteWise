@@ -1,0 +1,22 @@
+{
+  "city_default": "Bangalore",
+  "row_count": 12151,
+  "budget_thresholds": {
+    "low_max": 300.0,
+    "medium_max": 500.0,
+    "low_percentile": 33.0,
+    "high_percentile": 66.0,
+    "mapping": {
+      "low": "cost_for_two <= 300.0",
+      "medium": "300.0 < cost_for_two <= 500.0",
+      "high": "cost_for_two > 500.0"
+    }
+  },
+  "null_counts": {
+    "rating": 2915,
+    "cost_for_two": 68,
+    "budget": 68,
+    "location": 11,
+    "cuisines": 21
+  }
+}

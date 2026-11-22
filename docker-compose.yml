@@ -23,7 +23,8 @@ services:
       LLM_MOCK_MODE: "${LLM_MOCK_MODE:-false}"
       API_DISABLE_DOCS: "${API_DISABLE_DOCS:-false}"
       API_RATE_LIMIT_PER_MINUTE: "${API_RATE_LIMIT_PER_MINUTE:-60}"
-      RUN_INGESTION: "${RUN_INGESTION:-false}"
+      # true by default so an empty volume still builds the store on first start
+      RUN_INGESTION: "${RUN_INGESTION:-true}"
     volumes:
       # Persist / share processed store with the host
       - ./data/processed:/app/data/processed

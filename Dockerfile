@@ -18,16 +18,22 @@ COPY pyproject.toml README.md ./
 COPY src ./src
 RUN pip install --no-cache-dir -e ".[data,llm,api]"
 
-# Baked processed store when present at build time (gitignored locally, copied if exists)
+# Baked processed store from git (restaurants.parquet). Fallback: ingest at build.
 COPY data/processed ./data/processed
 COPY data/raw/.gitkeep ./data/raw/.gitkeep
 COPY scripts/docker-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh \
-    && mkdir -p /app/data/processed /app/data/raw
+    && mkdir -p /app/data/processed /app/data/raw \
+    && if [ ! -f /app/data/processed/restaurants.parquet ]; then \
+         python -m src.ingestion; \
+       fi
+
+# Safety net at container start if a volume hides the baked store
+ENV RUN_INGESTION=true
 
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
     CMD curl -fsS "http://127.0.0.1:${API_PORT:-8000}/health" || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]

@@ -246,7 +246,7 @@ docker compose up --build
 - UI: http://localhost:3000  
 - API: http://localhost:8000/health  
 - `NEXT_PUBLIC_API_BASE_URL` defaults to `http://127.0.0.1:8000` so the **browser** reaches the published API port (not the Compose DNS name `api`).
-- First cold start without Parquet: set `RUN_INGESTION=true` (needs HF network) or mount/bake `data/processed/`.
+- Processed store (`data/processed/restaurants.parquet`) is tracked in git and baked into the API image. If it is still missing at runtime (e.g. empty volume), the entrypoint runs `python -m src.ingestion` unless `RUN_INGESTION=false`.
 
 Build images alone:
 

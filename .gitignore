@@ -24,8 +24,11 @@ env/
 # Data caches (keep folder structure via .gitkeep)
 data/raw/*
 !data/raw/.gitkeep
+# Ignore processed junk, but track the baked store used by Railway/Docker deploys
 data/processed/*
 !data/processed/.gitkeep
+!data/processed/restaurants.parquet
+!data/processed/budget_thresholds.json
 
 # Hugging Face / datasets caches
 .cache/
