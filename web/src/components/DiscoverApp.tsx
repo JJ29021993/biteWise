@@ -134,16 +134,19 @@ export function DiscoverApp() {
 
         {optionsError && (
           <div className="mb-6 rounded-xl border border-crimson/40 bg-crimson/10 px-4 py-3 text-sm text-crimson-soft">
-            {optionsError}. Check that{" "}
+            {optionsError}. The API may be down (check Railway{" "}
+            <code className="rounded bg-surface px-1.5 py-0.5 text-ink">
+              /health
+            </code>
+            ), or{" "}
             <code className="rounded bg-surface px-1.5 py-0.5 text-ink">
               NEXT_PUBLIC_API_BASE_URL
             </code>{" "}
-            points at a reachable API and that the API allows this site&apos;s
-            origin in{" "}
+            /{" "}
             <code className="rounded bg-surface px-1.5 py-0.5 text-ink">
               API_CORS_ORIGINS
-            </code>
-            .
+            </code>{" "}
+            may be misconfigured.
           </div>
         )}
 

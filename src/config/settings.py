@@ -111,8 +111,9 @@ class Settings(BaseSettings):
         default=8000,
         ge=1,
         le=65535,
-        validation_alias=AliasChoices("API_PORT", "PORT"),
-        description="Listen port. PORT is accepted for PaaS platforms.",
+        # Prefer PORT so Railway/Render/Fly routing works even if API_PORT is set in the image.
+        validation_alias=AliasChoices("PORT", "API_PORT"),
+        description="Listen port. PORT (PaaS) wins over API_PORT when both are set.",
     )
     api_disable_docs: bool = Field(
         default=False,

@@ -55,11 +55,11 @@ def test_api_port_accepts_paas_port_env(monkeypatch):
     assert settings.api_port == 8080
 
 
-def test_api_port_prefers_api_port_over_port(monkeypatch):
+def test_api_port_prefers_paas_port_over_api_port(monkeypatch):
     monkeypatch.setenv("API_PORT", "8001")
     monkeypatch.setenv("PORT", "8080")
     settings = Settings(_env_file=None)
-    assert settings.api_port == 8001
+    assert settings.api_port == 8080
 
 
 def test_api_disable_docs_default_false():

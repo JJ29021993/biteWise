@@ -4,8 +4,8 @@ FROM python:3.12-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    API_HOST=0.0.0.0 \
-    API_PORT=8000
+    API_HOST=0.0.0.0
+# Do not hardcode API_PORT — Railway injects PORT and proxies to it.
 
 WORKDIR /app
 
@@ -34,7 +34,7 @@ ENV RUN_INGESTION=true
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-    CMD curl -fsS "http://127.0.0.1:${API_PORT:-8000}/health" || exit 1
+    CMD curl -fsS "http://127.0.0.1:${PORT:-${API_PORT:-8000}}/health" || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python", "-m", "src.api"]
