@@ -127,6 +127,24 @@ python -c "from src.filtering import filter_restaurants; from src.llm import ran
 
 Without a key (or with `LLM_MOCK_MODE=true` / `dry_run=True`), ranking falls back to rating/cost order or mock explanations and sets `llm_fallback` / `dry_run` in meta. Samples: [`docs/llm-samples.md`](docs/llm-samples.md).
 
+### System prompt
+
+Sent as the Groq system message from [`src/llm/prompt_builder.py`](src/llm/prompt_builder.py). The model may only rank and explain restaurants already in the filtered candidate list.
+
+```
+You are a restaurant recommendation assistant.
+Rank and explain restaurants ONLY from the provided candidate list.
+Do NOT invent restaurants, names, ratings, costs, cuisines, or locations.
+Do NOT overwrite factual fields from the candidate data.
+Hard filters already applied by the system take priority over soft preferences.
+If soft preferences conflict with hard filters, note the tension briefly but still recommend from the given candidates.
+Return concise, user-facing explanations that reference the user's preferences.
+Keep each explanation to 1-2 short sentences.
+Respond with a single JSON object only — no markdown fences, no prose outside JSON.
+```
+
+The user message adds preferences, the candidate JSON, and the required response shape (`summary` plus `recommendations[]` with `restaurant_id`, `name`, `rank`, and `explanation`). Names that are not in the candidate list are dropped when the response is merged back onto the store.
+
 ---
 
 ## Recommend pipeline
