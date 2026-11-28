@@ -1012,7 +1012,7 @@ def main() -> None:
                 height=90,
             )
             top_k = st.slider(
-                "Target Shortlist (Top-K)",
+                "Target Shortlist",
                 min_value=1,
                 max_value=10,
                 value=5,

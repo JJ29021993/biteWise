@@ -214,7 +214,7 @@ export function TasteProfileForm({
 
       <div className="flex items-center justify-between rounded-lg bg-surface p-3">
         <div>
-          <p className="text-sm font-semibold text-ink">Target Shortlist (Top-K)</p>
+          <p className="text-sm font-semibold text-ink">Target Shortlist</p>
           <p className="text-[11px] text-muted">How many restaurants to return</p>
         </div>
         <div className="flex items-center gap-2">
