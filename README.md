@@ -2,6 +2,18 @@
 
 Hybrid **filter-then-LLM** recommender: deterministic restaurant filtering first, then grounded Groq ranking and explanations. Facts (name, rating, cost, cuisine) always come from the local dataset; the LLM only ranks and explains.
 
+## Tech stack
+
+| Layer | Choice |
+|---|---|
+| API | Python 3.10+ (3.12 recommended), FastAPI, Uvicorn, Pydantic v2 |
+| LLM | Groq via the OpenAI-compatible SDK. Default model `openai/gpt-oss-120b` |
+| Data | Hugging Face `datasets`, pandas, Parquet (`pyarrow`) |
+| Web UI | Next.js 15, React 19, TypeScript, Tailwind CSS |
+| Alternate UI | Streamlit |
+| Tests | pytest. The suite runs without a live Groq key |
+| Deploy | Docker Compose locally. API hosted on Railway |
+
 Project docs (source of truth):
 
 - [`docs/problemStatement.md`](docs/problemStatement.md) — goals and workflow
@@ -143,7 +155,60 @@ Keep each explanation to 1-2 short sentences.
 Respond with a single JSON object only — no markdown fences, no prose outside JSON.
 ```
 
-The user message adds preferences, the candidate JSON, and the required response shape (`summary` plus `recommendations[]` with `restaurant_id`, `name`, `rank`, and `explanation`). Names that are not in the candidate list are dropped when the response is merged back onto the store.
+### Response schema
+
+The user message sends preferences, the capped candidate JSON, and this contract. The model must return one JSON object and nothing else.
+
+```json
+{
+  "summary": "optional short overview of the shortlist",
+  "recommendations": [
+    {
+      "restaurant_id": 101,
+      "name": "exact name from candidates",
+      "rank": 1,
+      "explanation": "1-2 short sentences why this fits"
+    }
+  ]
+}
+```
+
+Rules sent with that shape:
+
+- Include at most `top_k` recommendations.
+- Prefer `restaurant_id` for identity. `name` must match a candidate exactly when used.
+- Only recommend restaurants present in `candidates`.
+- Rank 1 is the best fit.
+- Keep the JSON compact so the response finishes completely.
+
+The HTTP response is wider than this. After parsing, the API copies name, cuisine, rating, cost, and location from the dataset and adds `meta` (filters, candidate counts, `dry_run`, `llm_fallback`). Contract: [`docs/api.md`](docs/api.md). Sample prompt and parsed JSON: [`docs/llm-samples.md`](docs/llm-samples.md).
+
+### Prompt versions
+
+There is one shipped system prompt. It was introduced with the recommender in commit `26aa9f2` (22 Nov 2026) and has not been revised since. Git history of `src/llm/prompt_builder.py` has no earlier or later wording.
+
+That single version was written to lock four constraints in the instruction itself:
+
+| Constraint in the prompt | Why it is there |
+|---|---|
+| Rank only from the provided candidate list. Do not invent restaurants or facts. | The model was ranking a filtered shortlist, not searching the web or the full corpus. |
+| Do not overwrite factual fields. Hard filters beat soft preferences. | Rating, cost, cuisine, and location must stay dataset values. Free-text preferences such as "family-friendly" can influence the explanation, not the filter. |
+| Explanations are 1–2 sentences and must reference the user's preferences. | Keeps the card copy short enough for the UI and tied to the request. |
+| One JSON object, no markdown fences. | The parser needs a stable payload. Fenced JSON is still recovered, but the prompt asks for raw JSON so the happy path does not depend on that recovery. |
+
+The default Groq model did change around the same time: `llama-3.3-70b-versatile` was retired on the free/dev tier, so settings now default to `openai/gpt-oss-120b`. That was a model swap, not a prompt rewrite.
+
+### How the scope limit is enforced
+
+The prompt tells the model to stay inside the candidate list. The code enforces that bound whether or not the model follows the instruction.
+
+1. **Filter first.** Location, cuisine, budget, and minimum rating run before any LLM call. If the set is empty, constraints relax in order cuisine, then budget, then minimum rating. Location never relaxes.
+2. **Candidate cap.** After name dedupe, the filter keeps at most `CANDIDATE_CAP` rows (default **50**) and only those rows are serialized into the prompt (`src/filtering/restaurant_filter.py`).
+3. **`top_k` clamp.** Callers ask for a shortlist (default **5**, minimum 1). If `top_k` is larger than `candidate_cap`, validation clamps it (`src/filtering/preferences.py`). The user message then says `Return at most {k} recommendations.`
+4. **Merge drops anything outside the list.** `merge_with_candidates` keeps a model row only when `restaurant_id` matches, or the name matches a candidate after case and whitespace normalization. Unknown restaurants are ignored. Name, rating, cost, cuisine, and location are copied from the store. The merged list is cut at `top_k` (`src/llm/engine.py`).
+5. **Fallback stays inside the same cap.** If Groq is missing, times out, or returns nothing usable, ranking falls back to rating then cost, still limited to `top_k`, and `meta.llm_fallback` is set.
+
+`meta.candidates_before_cap`, `meta.candidates_considered`, `meta.candidate_cap`, and `meta.top_k` record what the cap did on that request.
 
 ---
 
