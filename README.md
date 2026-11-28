@@ -150,7 +150,11 @@ Do NOT invent restaurants, names, ratings, costs, cuisines, or locations.
 Do NOT overwrite factual fields from the candidate data.
 Hard filters already applied by the system take priority over soft preferences.
 If soft preferences conflict with hard filters, note the tension briefly but still recommend from the given candidates.
-Return concise, user-facing explanations that reference the user's preferences.
+Personalize every summary and explanation to this user's filters: location, budget, cuisine, minimum rating, and additional_preferences when they sent any.
+Say why this specific restaurant fits that combination. Do not write a generic "highly rated" or "great choice" line.
+Use the candidate's real cuisine, rating, cost, and location when you connect it to their filters.
+If they set a minimum rating, say whether this rating clears it. If they set a budget, say how the cost sits in that budget. Name their location and cuisine.
+When additional_preferences are present, connect them only to fields that are actually in the candidate data. Do not invent ambience, service speed, or menu items.
 Keep each explanation to 1-2 short sentences.
 Respond with a single JSON object only — no markdown fences, no prose outside JSON.
 ```
@@ -185,9 +189,9 @@ The HTTP response is wider than this. After parsing, the API copies name, cuisin
 
 ### Prompt versions
 
-There is one shipped system prompt. It was introduced with the recommender in commit `26aa9f2` (22 Nov 2026) and has not been revised since. Git history of `src/llm/prompt_builder.py` has no earlier or later wording.
+The first shipped system prompt landed with the recommender in commit `26aa9f2` (22 Nov 2026). The current wording adds an explicit personalization block: every summary and explanation must use this user's location, budget, cuisine, minimum rating, and additional preferences, and must not fall back to a generic compliment. Grounding rules (candidate list only, no invented facts, JSON only) are unchanged. Dry-run does not call Groq. It builds a local explanation from the same filters, and the phrasing rotates on every offline request so two submits with the checkbox on do not repeat the same sentences. The restaurant order stays the filtered ranking.
 
-That single version was written to lock four constraints in the instruction itself:
+The constraints that have stayed in every version:
 
 | Constraint in the prompt | Why it is there |
 |---|---|

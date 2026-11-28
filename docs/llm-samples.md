@@ -17,6 +17,8 @@ You are a restaurant recommendation assistant.
 Rank and explain restaurants ONLY from the provided candidate list.
 Do NOT invent restaurants, names, ratings, costs, cuisines, or locations.
 ...
+Personalize every summary and explanation to this user's filters: location, budget, cuisine, minimum rating, and additional_preferences when they sent any.
+...
 Respond with a single JSON object only — no markdown fences, no prose outside JSON.
 ```
 

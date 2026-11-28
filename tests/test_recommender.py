@@ -134,7 +134,36 @@ def test_dry_run_sets_flag_and_returns_recs(candidate_store, budget_thresholds):
     assert result.meta.dry_run is True
     assert len(result.recommendations) == 2
     assert result.summary is not None
+    assert "dry-run" in result.summary.lower()
     assert "Italian" in (result.recommendations[0].explanation or "")
+
+
+def test_dry_run_wording_changes_each_request(candidate_store, budget_thresholds):
+    """Offline mode should not repeat the same mock copy on the next submit."""
+    service = RecommenderService(
+        restaurants=candidate_store,
+        budget_thresholds=budget_thresholds,
+        dry_run=True,
+    )
+    prefs = dict(
+        location="Indiranagar",
+        budget="medium",
+        cuisine="Italian",
+        min_rating=4.0,
+        top_k=2,
+        additional_preferences="family-friendly",
+    )
+    first = service.recommend(**prefs)
+    second = service.recommend(**prefs)
+    assert first.summary != second.summary
+    assert first.recommendations[0].explanation != second.recommendations[0].explanation
+    assert first.recommendations[0].name == second.recommendations[0].name
+    for result in (first, second):
+        assert "dry-run" in (result.summary or "").lower()
+        explanation = result.recommendations[0].explanation or ""
+        assert "Italian" in explanation
+        assert "family-friendly" in explanation
+        assert "Indiranagar" in explanation
 
 
 def test_recommend_rejects_invalid_preferences(candidate_store):
@@ -237,3 +266,50 @@ def test_recommend_dry_run_without_api_key(candidate_store, budget_thresholds):
     assert len(result.recommendations) == 2
     assert all(r.name for r in result.recommendations)
     assert all(r.rating is not None for r in result.recommendations)
+
+
+def test_switching_off_dry_run_rebuilds_live_client(
+    candidate_store, budget_thresholds, sample_llm_text, monkeypatch
+):
+    """Regression: dry_run→live must not reuse a cached MockLLMClient engine."""
+    live_calls: list[str] = []
+
+    def fake_create_llm_client(*, settings=None, mock_response=None):
+        del settings, mock_response
+        live_calls.append("live")
+        return MockLLMClient(response_text=sample_llm_text)
+
+    monkeypatch.setattr(
+        "src.services.recommender.create_llm_client", fake_create_llm_client
+    )
+
+    service = RecommenderService(
+        settings=Settings(llm_api_key="test-key", llm_mock_mode=False),
+        restaurants=candidate_store,
+        budget_thresholds=budget_thresholds,
+        dry_run=True,
+    )
+    dry = service.recommend(
+        location="Indiranagar",
+        budget="medium",
+        cuisine="Italian",
+        min_rating=4.0,
+        top_k=2,
+        dry_run=True,
+    )
+    assert dry.meta.dry_run is True
+    assert live_calls == []
+    assert "dry-run" in (dry.summary or "").lower()
+
+    live = service.recommend(
+        location="Indiranagar",
+        budget="medium",
+        cuisine="Italian",
+        min_rating=4.0,
+        top_k=2,
+        dry_run=False,
+    )
+    assert live.meta.dry_run is False
+    assert live_calls == ["live"]
+    assert live.summary != dry.summary
+    assert "dry-run" not in (live.summary or "").lower()

@@ -38,7 +38,11 @@ Do NOT invent restaurants, names, ratings, costs, cuisines, or locations.
 Do NOT overwrite factual fields from the candidate data.
 Hard filters already applied by the system take priority over soft preferences.
 If soft preferences conflict with hard filters, note the tension briefly but still recommend from the given candidates.
-Return concise, user-facing explanations that reference the user's preferences.
+Personalize every summary and explanation to this user's filters: location, budget, cuisine, minimum rating, and additional_preferences when they sent any.
+Say why this specific restaurant fits that combination. Do not write a generic "highly rated" or "great choice" line.
+Use the candidate's real cuisine, rating, cost, and location when you connect it to their filters.
+If they set a minimum rating, say whether this rating clears it. If they set a budget, say how the cost sits in that budget. Name their location and cuisine.
+When additional_preferences are present, connect them only to fields that are actually in the candidate data. Do not invent ambience, service speed, or menu items.
 Keep each explanation to 1-2 short sentences.
 Respond with a single JSON object only — no markdown fences, no prose outside JSON.
 ```
