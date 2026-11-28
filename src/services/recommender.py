@@ -179,9 +179,11 @@ class RecommenderService:
         self._dry_run = (
             bool(self.settings.llm_mock_mode) if dry_run is None else bool(dry_run)
         )
-        self._engine: RecommendationEngine | None = None
-        # Tracks which mode built `_engine` so dry_run ↔ live switches rebuild the client.
-        self._engine_dry_run: bool | None = None
+        # Cached engine is strictly for live mode; dry-run engines are always
+        # request-local so concurrent dry-run and live requests never share or
+        # overwrite cached mock clients.
+        self._live_engine: RecommendationEngine | None = None
+        self._engine_lock = threading.Lock()
 
     @property
     def dry_run(self) -> bool:
@@ -211,10 +213,11 @@ class RecommenderService:
         candidates: pd.DataFrame,
         *,
         top_k: int,
+        dry_run: bool,
     ) -> LLMClient:
         if self._client_override is not None:
             return self._client_override
-        if self._dry_run:
+        if dry_run:
             return MockLLMClient(
                 response_text=_build_mock_response_text(
                     preferences, candidates, top_k=top_k
@@ -228,25 +231,26 @@ class RecommenderService:
         candidates: pd.DataFrame,
         *,
         top_k: int,
+        dry_run: bool,
     ) -> RecommendationEngine:
-        client = self._resolve_client(preferences, candidates, top_k=top_k)
-        # Rebuild when:
-        # - no engine yet
-        # - dry-run (mock text is candidate-specific)
-        # - injected client override
-        # - mode flipped dry_run ↔ live (avoid keeping a stale MockLLMClient)
-        mode_changed = (
-            self._engine is not None and self._engine_dry_run != self._dry_run
-        )
-        if (
-            self._engine is None
-            or self._dry_run
-            or self._client_override is not None
-            or mode_changed
-        ):
-            self._engine = RecommendationEngine(settings=self.settings, client=client)
-            self._engine_dry_run = self._dry_run
-        return self._engine
+        # Injected client override and dry-run requests always get a request-local
+        # engine and never touch `_live_engine`.
+        if self._client_override is not None or dry_run:
+            client = self._resolve_client(
+                preferences, candidates, top_k=top_k, dry_run=dry_run
+            )
+            return RecommendationEngine(settings=self.settings, client=client)
+
+        if self._live_engine is None:
+            with self._engine_lock:
+                if self._live_engine is None:
+                    client = self._resolve_client(
+                        preferences, candidates, top_k=top_k, dry_run=False
+                    )
+                    self._live_engine = RecommendationEngine(
+                        settings=self.settings, client=client
+                    )
+        return self._live_engine
 
     def recommend(
         self,
@@ -349,19 +353,13 @@ class RecommenderService:
                 meta=base_meta,
             )
 
-        # Temporarily honor per-call dry_run without mutating service default forever
-        # when recommend(dry_run=...) differs from self._dry_run.
-        previous_dry = self._dry_run
-        self._dry_run = dry_run
-        try:
-            engine = self._get_engine(
-                prefs,
-                filter_result.candidates,
-                top_k=prefs.top_k,
-            )
-            ranked = engine.rank(prefs, filter_result.candidates, top_k=prefs.top_k)
-        finally:
-            self._dry_run = previous_dry
+        engine = self._get_engine(
+            prefs,
+            filter_result.candidates,
+            top_k=prefs.top_k,
+            dry_run=dry_run,
+        )
+        ranked = engine.rank(prefs, filter_result.candidates, top_k=prefs.top_k)
 
         logger.info(
             "LLM rank complete: returned=%s fallback=%s dry_run=%s",
@@ -436,5 +434,5 @@ def recommend(
         )
         return service.recommend(preferences, dry_run=dry_run, relax=relax, **kwargs)
 
-    service = get_recommender_service(settings=settings, dry_run=dry_run)
+    service = get_recommender_service(settings=settings)
     return service.recommend(preferences, dry_run=dry_run, relax=relax, **kwargs)

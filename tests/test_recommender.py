@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pandas as pd
@@ -299,6 +302,7 @@ def test_switching_off_dry_run_rebuilds_live_client(
     )
     assert dry.meta.dry_run is True
     assert live_calls == []
+    assert service._live_engine is None
     assert "dry-run" in (dry.summary or "").lower()
 
     live = service.recommend(
@@ -311,5 +315,88 @@ def test_switching_off_dry_run_rebuilds_live_client(
     )
     assert live.meta.dry_run is False
     assert live_calls == ["live"]
+    assert service._live_engine is not None
     assert live.summary != dry.summary
     assert "dry-run" not in (live.summary or "").lower()
+
+    # Subsequent dry-run and live calls must keep live engine isolated & reused.
+    dry_again = service.recommend(
+        location="Indiranagar",
+        budget="medium",
+        cuisine="Italian",
+        min_rating=4.0,
+        top_k=2,
+        dry_run=True,
+    )
+    assert dry_again.meta.dry_run is True
+    assert "dry-run" in (dry_again.summary or "").lower()
+
+    live_again = service.recommend(
+        location="Indiranagar",
+        budget="medium",
+        cuisine="Italian",
+        min_rating=4.0,
+        top_k=2,
+        dry_run=False,
+    )
+    assert live_again.meta.dry_run is False
+    assert live_calls == ["live"]
+    assert "dry-run" not in (live_again.summary or "").lower()
+
+
+def test_concurrent_dry_run_and_live_requests_do_not_bleed(
+    candidate_store, budget_thresholds, sample_llm_text, monkeypatch
+):
+    """Concurrent dry_run and live calls on a shared service must stay isolated."""
+    create_lock = threading.Lock()
+    created_clients: list[int] = []
+
+    class SlowLiveClient:
+        def complete(self, messages, *, temperature=None, max_tokens=None):
+            del messages, temperature, max_tokens
+            time.sleep(0.02)
+            return sample_llm_text
+
+    def fake_create_llm_client(*, settings=None, mock_response=None):
+        del settings, mock_response
+        with create_lock:
+            created_clients.append(1)
+        return SlowLiveClient()
+
+    monkeypatch.setattr(
+        "src.services.recommender.create_llm_client", fake_create_llm_client
+    )
+
+    service = RecommenderService(
+        settings=Settings(llm_api_key="test-key", llm_mock_mode=False),
+        restaurants=candidate_store,
+        budget_thresholds=budget_thresholds,
+        dry_run=False,
+    )
+
+    def run_call(is_dry: bool):
+        return (
+            is_dry,
+            service.recommend(
+                location="Indiranagar",
+                budget="medium",
+                cuisine="Italian",
+                min_rating=4.0,
+                top_k=2,
+                dry_run=is_dry,
+            ),
+        )
+
+    modes = [True, False] * 8
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        results = list(pool.map(run_call, modes))
+
+    assert len(created_clients) == 1
+    assert service.dry_run is False
+    for is_dry, res in results:
+        assert res.meta.dry_run is is_dry
+        summary_lower = (res.summary or "").lower()
+        if is_dry:
+            assert "dry-run" in summary_lower
+        else:
+            assert "dry-run" not in summary_lower
